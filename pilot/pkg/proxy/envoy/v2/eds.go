@@ -16,8 +16,8 @@ package v2
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -30,6 +30,7 @@ import (
 	xdsapi "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/endpoint"
+	"github.com/gogo/protobuf/jsonpb"
 	"github.com/gogo/protobuf/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -166,7 +167,7 @@ func updateCluster(clusterName string, edsCluster *EdsCluster) {
 		_, subsetName, hostname, p = model.ParseSubsetKey(clusterName)
 		ports = []*model.Port{p}
 		portName = p.Name
-		labels = edsCluster.discovery.env.IstioConfigStore.SubsetToLabels(subsetName, hostname, "")
+		labels = edsCluster.discovery.env.IstioConfigStore.SubsetToLabels(subsetName, hostname)
 	} else {
 		hostname, ports, labels = model.ParseServiceKey(clusterName)
 		if len(ports) > 0 {
@@ -424,14 +425,20 @@ func EDSz(w http.ResponseWriter, req *http.Request) {
 		edsPushAll()
 	}
 	edsClusterMutex.Lock()
-	data, err := json.Marshal(edsClusters)
-	edsClusterMutex.Unlock()
-	if err != nil {
-		_, _ = w.Write([]byte(err.Error()))
-		return
+	comma1 := false
+	for _, eds := range edsClusters {
+		if comma1 {
+			fmt.Fprint(w, ",\n")
+		} else {
+			comma1 = true
+		}
+		jsonm := &jsonpb.Marshaler{Indent: "  "}
+		dbgString, _ := jsonm.MarshalToString(eds.LoadAssignment)
+		if _, err := w.Write([]byte(dbgString)); err != nil {
+			return
+		}
 	}
-
-	_, _ = w.Write(data)
+	edsClusterMutex.Unlock()
 }
 
 // addEdsCon will track the eds connection with clusters, for optimized event-based push and debug
