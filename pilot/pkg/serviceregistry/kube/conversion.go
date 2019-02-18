@@ -145,6 +145,9 @@ func externalNameServiceInstances(k8sSvc v1.Service, svc *model.Service) []*mode
 			Service: svc,
 			Labels:  k8sSvc.Labels,
 		})
+		if len(k8sSvc.Labels) == 0 {
+			
+		}
 	}
 	return out
 }

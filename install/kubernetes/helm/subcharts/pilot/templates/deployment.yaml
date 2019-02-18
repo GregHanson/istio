@@ -50,6 +50,8 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           args:
           - "discovery"
+          - --log_output_level
+          - "default:debug,model:debug"
           - --monitoringAddr=:{{ .Values.global.monitoringPort }}
           - --domain
           - {{ .Values.global.proxy.clusterDomain }}
@@ -143,6 +145,8 @@ spec:
           - istio-pilot
           - --templateFile
           - /etc/istio/proxy/envoy_pilot.yaml.tmpl
+          - --proxyLogLevel
+          - "debug"
         {{- if $.Values.global.controlPlaneSecurityEnabled}}
           - --controlPlaneAuthPolicy
           - MUTUAL_TLS

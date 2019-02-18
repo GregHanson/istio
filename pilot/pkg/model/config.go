@@ -28,6 +28,7 @@ import (
 	networking "istio.io/api/networking/v1alpha3"
 	"istio.io/istio/galley/pkg/metadata"
 	"istio.io/istio/pilot/pkg/model/test"
+	istiolog "istio.io/istio/pkg/log"
 )
 
 const (
@@ -656,9 +657,14 @@ func sortConfigByCreationTime(configs []Config) []Config {
 func (store *istioConfigStore) Gateways(workloadLabels LabelsCollection) []Config {
 	configs, err := store.List(Gateway.Type, NamespaceAll)
 	if err != nil {
+		istiolog.Errorf("could not retrieve Gateways: %v", err)
 		return nil
 	}
-
+	if len(configs) == 0 {
+		istiolog.Warn("no gateways were retrieved")
+	} else {
+		istiolog.Infof("%v gateways received", len(configs))
+	}
 	sortConfigByCreationTime(configs)
 	out := make([]Config, 0)
 	for _, config := range configs {
@@ -666,10 +672,14 @@ func (store *istioConfigStore) Gateways(workloadLabels LabelsCollection) []Confi
 		if gateway.GetSelector() == nil {
 			// no selector. Applies to all workloads asking for the gateway
 			out = append(out, config)
+			istiolog.Info("caught in top level")
 		} else {
 			gatewaySelector := Labels(gateway.GetSelector())
 			if workloadLabels.IsSupersetOf(gatewaySelector) {
 				out = append(out, config)
+				istiolog.Infof("workload labels %v match with gatewayselector %v", workloadLabels, gatewaySelector)
+			} else {
+				istiolog.Infof("workload labels %v did not match gatewayselector %v", workloadLabels, gatewaySelector)
 			}
 		}
 	}

@@ -21,6 +21,7 @@ import (
 	multierror "github.com/hashicorp/go-multierror"
 
 	"istio.io/istio/pilot/cmd/pilot-agent/status/util"
+	"istio.io/istio/pkg/log"
 )
 
 // Probe for readiness.
@@ -74,8 +75,9 @@ func (p *Probe) checkUpdated() error {
 	CDSUpdated := s.CDSUpdatesSuccess > 0 || s.CDSUpdatesRejection > 0
 	LDSUpdated := s.LDSUpdatesSuccess > 0 || s.LDSUpdatesRejection > 0
 	if CDSUpdated && LDSUpdated {
+		log.Warnf("CDS and LDS received")
 		return nil
 	}
-
+	log.Errorf("CDS and LDS have not been configured, server unhealthy")
 	return errors.New(s.String())
 }

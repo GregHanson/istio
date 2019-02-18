@@ -47,12 +47,12 @@ func (configgen *ConfigGeneratorImpl) buildGatewayListeners(env *model.Environme
 
 	gatewaysForWorkload := env.Gateways(workloadLabels)
 	if len(gatewaysForWorkload) == 0 {
-		log.Debuga("buildGatewayListeners: no gateways for router", node.ID)
+		log.Debugf("buildGatewayListeners: no gateways for router %v labels %v", node.ID, workloadLabels)
 		return []*xdsapi.Listener{}, nil
 	}
 
 	mergedGateway := model.MergeGateways(gatewaysForWorkload...)
-	log.Debugf("buildGatewayListeners: gateways after merging: %v", mergedGateway)
+	log.Debugf("buildGatewayListeners gihanson: gateways after merging: %v", mergedGateway)
 
 	errs := &multierror.Error{}
 	listeners := make([]*xdsapi.Listener, 0, len(mergedGateway.Servers))

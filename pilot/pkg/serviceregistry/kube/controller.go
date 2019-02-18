@@ -510,6 +510,7 @@ func (c *Controller) GetProxyServiceInstances(proxy *model.Proxy) ([]*model.Serv
 				ep := *item.(*v1.Endpoints)
 				out = append(out, c.getProxyServiceInstancesByEndpoint(ep, proxy)...)
 			}
+			log.Info("returning at point 1")
 			return out, nil
 		}
 	}
@@ -543,6 +544,7 @@ func (c *Controller) GetProxyServiceInstances(proxy *model.Proxy) ([]*model.Serv
 			log.Infof("Missing env, empty list of services for pod %s", proxy.ID)
 		}
 	}
+	log.Info("returning at end")
 	return out, nil
 }
 
@@ -573,6 +575,7 @@ func (c *Controller) getProxyServiceInstancesByEndpoint(endpoints v1.Endpoints, 
 					nrEP := getEndpoints(proxyIP, c, port, svcPort, svc)
 					out = append(out, nrEP)
 					if c.Env != nil {
+						log.Warnf("Adding not ready endpoint")
 						c.Env.PushContext.Add(model.ProxyStatusEndpointNotReady, proxy.ID, proxy, "")
 					}
 				}
@@ -690,6 +693,11 @@ func (c *Controller) AppendServiceHandler(f func(*model.Service, model.Event)) e
 
 		svcConv := convertService(*svc, c.domainSuffix)
 		instances := externalNameServiceInstances(*svc, svcConv)
+		for _, instance := range instances {
+			if len(instance.Labels) == 0 {
+				log.Infof("no labels for service instance: labels: %v\nmeta: %v", instance.Labels, svc.ObjectMeta.Labels)
+			}
+		}
 		switch event {
 		case model.EventDelete:
 			c.Lock()

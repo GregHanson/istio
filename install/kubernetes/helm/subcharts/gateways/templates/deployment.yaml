@@ -103,7 +103,7 @@ spec:
           - --domain
           - $(POD_NAMESPACE).svc.{{ $.Values.global.proxy.clusterDomain }}
           - --log_output_level
-          - 'info'
+          - "default:debug,model:debug"
           - --drainDuration
           - '45s' #drainDuration
           - --parentShutdownDuration
