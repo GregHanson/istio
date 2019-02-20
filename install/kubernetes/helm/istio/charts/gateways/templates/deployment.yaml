@@ -191,6 +191,11 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+          {{- if $spec.labels }}
+          - name: ISTIO_META_INSTANCE_LABELS
+            value: |
+                  {{ toJson $spec.labels }}
+          {{- end }}
           {{- if $spec.sds }}
           {{- if $spec.sds.enabled }}
           - name: ISTIO_META_USER_SDS

@@ -15,6 +15,7 @@
 package v1alpha3
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -43,6 +44,21 @@ func (configgen *ConfigGeneratorImpl) buildGatewayListeners(env *model.Environme
 	var workloadLabels model.LabelsCollection
 	for _, w := range workloadInstances {
 		workloadLabels = append(workloadLabels, w.Labels)
+	}
+
+	// FIXME temporary fix for pods coming up but not having labels assigned to them
+	// issue: https://github.com/istio/istio/issues/10904
+	if len(workloadLabels) == 0 {
+		if meta := node.Metadata["ISTIO_META_INSTANCE_LABELS"]; meta != "" {
+			log.Debuga("buildGatewayListeners: no labels found for router, extracting metadata", node.ID)
+			labels := map[string]string{}
+			err := json.Unmarshal([]byte(meta), &labels)
+			if err != nil {
+				workloadLabels = append(workloadLabels, labels)
+			} else {
+				log.Errorf("error unmarshalling metadata to extract labels: %v", err)
+			}
+		}
 	}
 
 	gatewaysForWorkload := env.Gateways(workloadLabels)
