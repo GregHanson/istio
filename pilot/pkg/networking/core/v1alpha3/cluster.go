@@ -19,6 +19,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	apiv2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	"github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
@@ -997,9 +998,15 @@ func buildDefaultPassthroughCluster(env *model.Environment) *apiv2.Cluster {
 // change all other callsites accordingly
 func buildDefaultCluster(env *model.Environment, name string, discoveryType apiv2.Cluster_DiscoveryType,
 	localityLbEndpoints []endpoint.LocalityLbEndpoints, direction model.TrafficDirection, metadata map[string]string) *apiv2.Cluster {
+
+	// TODO gihanson make idletimeout configurable via mesh
+	defaultIdleTimeout := time.Duration(time.Second * 15)
 	cluster := &apiv2.Cluster{
 		Name:                 name,
 		ClusterDiscoveryType: &apiv2.Cluster_Type{Type: discoveryType},
+		CommonHttpProtocolOptions: &core.HttpProtocolOptions{
+			IdleTimeout: &defaultIdleTimeout,
+		},
 	}
 
 	// TODO does Istio use type LOGICAL_DNS anywhere - remove logical DNS logic if not
